@@ -1,0 +1,31 @@
+
+.seller-theme {
+  color-scheme: dark;
+  --seller-bg: #0b0b0b;
+  --seller-sidebar: #070707;
+  --seller-text: #f4f1e9;
+  --seller-muted: #a7a198;
+  --seller-gold: #c7a45a;
+  --seller-border: #302d27;
+  --seller-account-start: #211c13;
+  --seller-card: #111;
+  background: var(--seller-bg);
+  color: var(--seller-text);
+  min-height: 100vh;
+}
+.seller-theme[data-theme="light"] {
+  color-scheme: light;
+  --seller-bg: #f6f3ed;
+  --seller-sidebar: #fffdf8;
+  --seller-text: #252018;
+  --seller-muted: #625a4c;
+  --seller-gold: #80601d;
+  --seller-border: #d9cfbd;
+  --seller-account-start: #f0e5ce;
+  --seller-card: #fffdf8;
+}
+.seller-theme .seller-theme-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 24px; font-size: 13px; min-height: 44px; }
+.seller-theme button:focus-visible,.seller-theme a:focus-visible { outline: 2px solid var(--seller-gold); outline-offset: 4px; }
+.seller-theme button:hover:not(:disabled) { background: var(--seller-account-start); }
+.seller-theme .seller-status { background: var(--seller-bg); color: var(--seller-text); }
+.seller-theme .seller-status button { color: var(--seller-gold); border-color: var(--seller-gold); }

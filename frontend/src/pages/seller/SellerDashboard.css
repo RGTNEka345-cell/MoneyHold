@@ -1,0 +1,30 @@
+
+.seller-workspace { min-height:100vh; display:grid; grid-template-columns:240px minmax(0,1fr); background:var(--seller-bg); color:var(--seller-text); }
+.seller-sidebar { background:#070707; padding:40px 24px; border-right:1px solid #29251d; display:flex; flex-direction:column; gap:24px; }
+.seller-logo { font-weight:800; letter-spacing:.18em; color:#c7a45a; text-decoration:none; }
+.seller-sidebar p,.seller-account>span,.seller-modules span { font-size:10px; letter-spacing:.15em; color:#b4975b; }
+.seller-sidebar>a:not(.seller-logo) { padding:14px 0; text-decoration:none; border-bottom:1px solid #262626; }
+.seller-sidebar button { margin-top:auto; }
+.seller-workspace button,.seller-status button { padding:12px 20px; border:1px solid #c7a45a; background:transparent; color:#c7a45a; }
+.seller-workspace button:disabled { opacity:.5; cursor:wait; }
+.seller-main { padding:48px clamp(24px,5vw,80px); }
+.seller-main header { display:flex; justify-content:space-between; gap:16px; }
+.seller-main h1 { font:500 clamp(32px,4vw,56px) 'Manrope',sans-serif; margin-bottom:12px; }
+.seller-main p { color:#a7a198; line-height:1.7; }
+.seller-account { margin:40px 0; padding:28px; border:1px solid #51432c; background:linear-gradient(120deg,#211c13,#111); }
+.seller-account p { overflow-wrap:anywhere; }
+.seller-modules { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.seller-modules section { padding:24px; border:1px solid #302d27; }
+.seller-status { min-height:100vh; display:grid; place-content:center; gap:20px; padding:24px; }
+@media(max-width:850px) { .seller-workspace { grid-template-columns:1fr; } .seller-sidebar { padding:24px; border-right:0; border-bottom:1px solid #29251d; } .seller-modules { grid-template-columns:1fr; } }
+
+.seller-workspace .seller-sidebar { background: var(--seller-sidebar); border-color: var(--seller-border); }
+.seller-workspace .seller-logo, .seller-sidebar p, .seller-account>span, .seller-modules span,
+.seller-main .eyebrow { color: var(--seller-gold); }
+.seller-workspace .seller-sidebar>a:not(.seller-logo) { border-color: var(--seller-border); }
+.seller-workspace button { color: var(--seller-gold); border-color: var(--seller-gold); }
+.seller-main header { align-items: center; flex-wrap: wrap; }
+.seller-main header .eyebrow { margin: 0; }
+.seller-main p { color: var(--seller-muted); }
+.seller-account { border-color: var(--seller-border); background: linear-gradient(120deg,var(--seller-account-start),var(--seller-card)); }
+.seller-modules section { border-color: var(--seller-border); background: var(--seller-card); }

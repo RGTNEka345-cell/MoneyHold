@@ -1,0 +1,6 @@
+.otp-field input { height: 76px; color: #c7a45a; text-align: center; font: 600 30px "Manrope", sans-serif; letter-spacing: .35em; padding-left: calc(16px + .35em); }
+.verify-actions { display: flex; justify-content: center; gap: 8px; margin-top: 26px; color: #77736c; font-size: 11px; }
+.verify-actions button { padding: 0; border: 0; background: none; color: #c7a45a; font-size: 11px; }
+.verify-actions button:disabled { color: #5f5b54; cursor: default; }
+.auth-success { margin: -6px 0 0; color: #91c99a; font-size: 11px; }
+.auth-submit:disabled { cursor: wait; opacity: .65; transform: none; }

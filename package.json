@@ -1,0 +1,9 @@
+{
+  "name": "clothing-ecommerce-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "frontend": "npm start --prefix frontend",
+    "backend": "npm start --prefix backend"
+  }
+}
