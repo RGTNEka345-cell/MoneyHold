@@ -4,6 +4,11 @@ const events=require('../utils/catalogEvents');
 const wrap=fn=>async(req,res,next)=>{try{await fn(req,res);}catch(e){if(e.status)return res.status(e.status).json({message:e.message});next(e);}};
 const notify=customerId=>{events.emit('orders:customer:'+customerId);events.emit('orders:seller');};
 exports.quote=wrap(async(req,res)=>res.json(await Order.quote(req.customer.id)));
+exports.tracking=wrap(async(req,res)=>{
+  const result=await require('../models/OrderTracking').save(req.params.id,req.seller.id,req.body);
+  if(result.changed)notify(result.customerId);
+  res.json({order:await Order.detail(req.params.id)});
+});
 exports.place=wrap(async(req,res)=>{
   const result=await Order.place(req.customer.id,req.body);
   if(!result.replayed){events.emit('cart:'+req.customer.id);events.emit('change');notify(req.customer.id);}

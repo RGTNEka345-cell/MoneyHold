@@ -1,0 +1,12 @@
+import React,{useState} from 'react';
+import {sellerRequest} from '../../../services/sellerApi';
+import '../../../components/Customer/ParcelTracking.css';
+export default function TrackingForm({order,onSaved}){
+  const [form,setForm]=useState({courierName:order.tracking?.courier_name||'',trackingNumber:order.tracking?.tracking_number||'',trackingUrl:order.tracking?.tracking_url||'',version:order.tracking?.version||0});
+  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[saved,setSaved]=useState(false);
+  const stale=form.version!==(order.tracking?.version||0);
+  const locked=['cancelled','delivered'].includes(order.status);
+  function reload(){setForm({courierName:order.tracking?.courier_name||'',trackingNumber:order.tracking?.tracking_number||'',trackingUrl:order.tracking?.tracking_url||'',version:order.tracking?.version||0});setError('');setSaved(false);}
+  async function submit(e){e.preventDefault();setBusy(true);setError('');setSaved(false);try{const result=await sellerRequest('/orders/'+order.id+'/tracking',form,'PATCH');setForm({...form,version:result.order.tracking.version});setSaved(true);onSaved();}catch(err){setError(err.message);}finally{setBusy(false);}}
+  return <form className="seller-tracking-form" onSubmit={submit}><h2>Courier tracking</h2><p>Enter the courier name and the real tracking number provided by the courier. The tracking URL is optional. Saving does not mark the order as shipped.</p>{locked&&<p>This order is {order.status}; tracking edits are locked.</p>}{stale&&<p role="alert">Tracking details changed. Reload the latest saved details before editing.</p>}<fieldset disabled={busy||locked||stale}>{[['courierName','Courier name',100],['trackingNumber','Tracking number',120],['trackingUrl','Tracking URL (HTTPS, optional)',1000]].map(([name,label,max])=><label key={name}>{label}<input required={name!=='trackingUrl'} type={name==='trackingUrl'?'url':'text'} maxLength={max} value={form[name]} onChange={e=>{setForm({...form,[name]:e.target.value});setSaved(false);}} placeholder={name==='trackingUrl'?'https://courier-website.com/track/...':undefined}/></label>)}</fieldset><div className="tracking-form-actions"><button disabled={busy||locked||stale}>Save tracking details</button>{stale&&<button type="button" disabled={busy} onClick={reload}>Load latest details</button>}</div>{error&&<p role="alert">{error} <button type="button" onClick={onSaved}>Refresh order</button></p>}{saved&&<p role="status">Tracking details saved. The customer has been notified.</p>}</form>;
+}

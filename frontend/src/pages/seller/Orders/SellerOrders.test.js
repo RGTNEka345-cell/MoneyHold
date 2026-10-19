@@ -15,6 +15,12 @@ test('seller status updates include expected previous state',async()=>{
   show();fireEvent.click(screen.getByRole('button',{name:'Mark processing'}));
   await waitFor(()=>expect(sellerRequest).toHaveBeenCalledWith('/orders/7/status',{status:'processing',expectedStatus:'placed'},'PATCH'));
 });
+test('All orders uses the styled navigation control with a decorative icon',()=>{
+  show();const link=screen.getByRole('link',{name:'All orders'});
+  expect(link.getAttribute('href')).toBe('/seller/orders');
+  expect(link.className).toBe('seller-order-back');
+  expect(link.querySelector('svg').getAttribute('aria-hidden')).toBe('true');
+});
 test('cancellation requires an explicit confirmation',async()=>{
   show();fireEvent.click(screen.getByRole('button',{name:'Cancel order'}));expect(sellerRequest).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button',{name:'Confirm cancellation'}));

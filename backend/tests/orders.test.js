@@ -12,7 +12,7 @@ test('COD checkout: authorization, snapshots, idempotency, stock race, rollback 
   try{
     await pool.query('CREATE TABLE customers (id BIGINT UNSIGNED PRIMARY KEY,email VARCHAR(191)) ENGINE=InnoDB');await pool.query("INSERT INTO customers VALUES (1,'one@example.test'),(2,'two@example.test')");
     await pool.query('CREATE TABLE sellers (id BIGINT UNSIGNED PRIMARY KEY,is_active BOOLEAN DEFAULT TRUE) ENGINE=InnoDB');await pool.query('INSERT INTO sellers (id) VALUES (1)');
-    for(const table of ['categories','products','product_variants','product_images','carts','cart_items','orders','order_items','order_status_history','notifications','order_email_jobs'])await pool.query(fs.readFileSync(path.join(__dirname,`../migrations/create_${table}_table.sql`),'utf8'));
+    for(const table of ['categories','products','product_variants','product_images','carts','cart_items','orders','order_items','order_status_history','notifications','order_email_jobs','order_tracking'])await pool.query(fs.readFileSync(path.join(__dirname,`../migrations/create_${table}_table.sql`),'utf8'));
     await pool.query("INSERT INTO categories (name) VALUES ('Tees')");
     await pool.query("INSERT INTO products (category_id,name,description,price,is_active) VALUES (1,'Signature Tee','Test',2500.25,1)");
     await pool.query("INSERT INTO product_variants (product_id,size,colour,stock) VALUES (1,'M','Black',10)");
@@ -57,8 +57,24 @@ test('COD checkout: authorization, snapshots, idempotency, stock race, rollback 
     let order=(await (await call('/orders/'+id)).json()).order;assert.equal(order.total_cents,555000);assert.equal(order.items[0].unit_price_cents,260000);
     await pool.query("UPDATE products SET name='Renamed',price=5000 WHERE id=1");
     order=(await (await call('/orders/'+id)).json()).order;assert.equal(order.items[0].product_name,'Signature Tee');assert.equal(order.total_cents,555000);
+    const tracking={courierName:'Test Courier',trackingNumber:'MH123',trackingUrl:'https://courier.example.com/track/MH123',version:0};
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',tracking,null,true)).status,401);
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',tracking)).status,404);
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',{...tracking,trackingUrl:'javascript:alert(1)'},'a',true)).status,422);
+    const jobsBeforeTracking=(await pool.query('SELECT COUNT(*) n FROM order_email_jobs'))[0][0].n;
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',tracking,'a',true)).status,200);
+    let tracked=(await (await call('/orders/'+id)).json()).order;
+    assert.equal(tracked.tracking.tracking_number,'MH123');assert.equal(tracked.status,'placed');assert.equal(tracked.tracking.version,1);
+    assert.equal((await pool.query('SELECT COUNT(*) n FROM order_email_jobs'))[0][0].n,jobsBeforeTracking+1);
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',{...tracking,version:1},'a',true)).status,200);
+    assert.equal((await pool.query('SELECT COUNT(*) n FROM order_email_jobs'))[0][0].n,jobsBeforeTracking+1);
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',{...tracking,trackingNumber:'STALE'},'a',true)).status,409);
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',{...tracking,trackingNumber:'MH456',version:1},'a',true)).status,200);
+    assert.match((await (await call('/notifications')).json()).items[0].message,/tracking details updated/);
+    assert.equal((await call('/orders/'+id,'GET',null,'b')).status,404);
     assert.equal((await call('/orders/'+id+'/status','PATCH',{status:'delivered',expectedStatus:'placed'},'a',true)).status,409);
     assert.equal((await call('/orders/'+id+'/status','PATCH',{status:'cancelled',expectedStatus:'placed'},'a',true)).status,200);assert.equal(await stock(),10);
+    assert.equal((await call('/orders/'+id+'/tracking','PATCH',{...tracking,version:2},'a',true)).status,409);
     assert.equal((await call('/orders/'+id+'/status','PATCH',{status:'cancelled',expectedStatus:'placed'},'a',true)).status,409);assert.equal(await stock(),10);
     // Competing customers cannot buy the last units twice.
     await pool.query('UPDATE product_variants SET stock=2 WHERE id=1');

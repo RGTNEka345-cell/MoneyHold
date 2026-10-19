@@ -28,6 +28,7 @@ router.get('/orders/events',orders.stream);
 router.get('/orders',orders.sellerList);
 router.get('/orders/:id',orders.sellerDetail);
 router.patch('/orders/:id/status',orders.status);
+router.patch('/orders/:id/tracking',orders.tracking);
 router.get('/catalog/events', catalog.events);
 router.get('/categories', catalog.categories);
 router.post('/categories', catalog.saveCategory);
