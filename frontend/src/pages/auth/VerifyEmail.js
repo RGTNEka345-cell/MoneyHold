@@ -3,10 +3,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../../components/Auth/AuthLayout";
 import { resendCustomerOTP, verifyCustomerEmail } from "../../services/api";
 import "./VerifyEmail.css";
+import { useCustomer } from '../../components/Customer/CustomerSessionProvider';
 
 export default function VerifyEmail() {
   const location = useLocation();
   const navigate = useNavigate();
+  const {accept}=useCustomer();
   const email = location.state?.email || sessionStorage.getItem("moneyHoldPendingEmail") || "";
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
@@ -32,11 +34,10 @@ export default function VerifyEmail() {
     try {
       setSubmitting(true);
       const result = await verifyCustomerEmail({ email, otp });
-      localStorage.setItem("moneyHoldToken", result.token);
-      localStorage.setItem("moneyHoldCustomer", JSON.stringify(result.customer));
+      accept(result.customer);
       sessionStorage.removeItem("moneyHoldPendingEmail");
       setMessage(result.message);
-      window.setTimeout(() => navigate("/"), 900);
+      navigate('/customer/account',{replace:true});
     } catch (requestError) { setError(requestError.message); }
     finally { setSubmitting(false); }
   };

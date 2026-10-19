@@ -14,9 +14,27 @@ router.use((req, res, next) => {
 router.post('/login', rateLimit({ windowMs: 15 * 60000, limit: 10, standardHeaders: true, legacyHeaders: false, message: { message: 'Too many login attempts. Try again in 15 minutes.' } }), controller.login);
 router.get('/me', sellerAuth, controller.me);
 router.get('/dashboard', sellerAuth, (req, res) => res.json({ seller: req.seller, modules: [
-  { name: 'Products', description: 'Product management is coming next.' },
-  { name: 'Orders', description: 'Order management is not available yet.' },
-  { name: 'Inventory', description: 'Size, colour and stock management is coming soon.' }
+  { name: 'Products', description: 'Add and edit products in Catalog & stock.' },
+  { name: 'Orders', description: 'Review COD orders and manage fulfilment in Orders.' },
+  { name: 'Inventory', description: 'Manage stock for each size and colour in Catalog & stock.' }
 ] }));
 router.post('/logout', controller.logout);
+const catalog = require('../controllers/CatalogController');
+const uploadProductImages = require('../middlewares/uploadProductImages');
+router.use(sellerAuth);
+router.use('/notifications',require('./notificationRoutes'));
+const orders=require('../controllers/OrderController');
+router.get('/orders/events',orders.stream);
+router.get('/orders',orders.sellerList);
+router.get('/orders/:id',orders.sellerDetail);
+router.patch('/orders/:id/status',orders.status);
+router.get('/catalog/events', catalog.events);
+router.get('/categories', catalog.categories);
+router.post('/categories', catalog.saveCategory);
+router.put('/categories/:id', catalog.saveCategory);
+router.get('/products', catalog.products);
+router.post('/products', uploadProductImages, catalog.saveProduct);
+router.put('/products/:id', uploadProductImages, catalog.saveProduct);
+router.patch('/products/:id/variants/:variantId/stock', catalog.stock);
+router.get('/images/:id', catalog.image);
 module.exports = router;

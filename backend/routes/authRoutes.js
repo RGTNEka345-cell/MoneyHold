@@ -23,7 +23,7 @@ const otpLimiter = rateLimit({
 });
 
 router.post("/customer/register", registrationLimiter, validateCustomerRegistration, registerCustomer);
-router.post("/customer/verify-email", otpLimiter, validateOTPVerification, verifyCustomerEmail);
+router.post("/customer/verify-email", require('../middlewares/customerOrigin'), otpLimiter, validateOTPVerification, verifyCustomerEmail);
 router.post("/customer/resend-otp", otpLimiter, validateEmailRequest, resendCustomerOTP);
 
 module.exports = router;

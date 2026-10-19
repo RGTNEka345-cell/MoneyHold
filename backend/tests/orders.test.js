@@ -1,0 +1,118 @@
+require('dotenv').config({path:require('path').join(__dirname,'../.env'),quiet:true});
+const {test}=require('node:test'),assert=require('node:assert/strict'),mysql=require('mysql2/promise'),fs=require('fs'),path=require('path');
+test('COD checkout: authorization, snapshots, idempotency, stock race, rollback and cancellation',async()=>{
+  const dbName='money_hold_orders_test_'+Date.now();
+  const admin=await mysql.createConnection({host:process.env.DB_HOST||'localhost',port:Number(process.env.DB_PORT)||3306,user:process.env.DB_USER||'root',password:process.env.DB_PASSWORD||process.env.DB_PASS||''});
+  await admin.query('CREATE DATABASE `'+dbName+'`');process.env.DB_NAME=dbName;
+  const {pool}=require('../config/database'),Session=require('../models/CustomerSession'),Seller=require('../models/Seller'),{hash}=require('../utils/customerSession');
+  const original=Session.find,originalSeller=Seller.session;
+  Session.find=async token=>({id:token===hash('a'.repeat(64))?1:2,first_name:'Test',email:'test@example.test'});
+  Seller.session=async()=>({id:1,name:'Seller'});
+  let server;
+  try{
+    await pool.query('CREATE TABLE customers (id BIGINT UNSIGNED PRIMARY KEY,email VARCHAR(191)) ENGINE=InnoDB');await pool.query("INSERT INTO customers VALUES (1,'one@example.test'),(2,'two@example.test')");
+    await pool.query('CREATE TABLE sellers (id BIGINT UNSIGNED PRIMARY KEY,is_active BOOLEAN DEFAULT TRUE) ENGINE=InnoDB');await pool.query('INSERT INTO sellers (id) VALUES (1)');
+    for(const table of ['categories','products','product_variants','product_images','carts','cart_items','orders','order_items','order_status_history','notifications','order_email_jobs'])await pool.query(fs.readFileSync(path.join(__dirname,`../migrations/create_${table}_table.sql`),'utf8'));
+    await pool.query("INSERT INTO categories (name) VALUES ('Tees')");
+    await pool.query("INSERT INTO products (category_id,name,description,price,is_active) VALUES (1,'Signature Tee','Test',2500.25,1)");
+    await pool.query("INSERT INTO product_variants (product_id,size,colour,stock) VALUES (1,'M','Black',10)");
+    server=require('../index').listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
+    const base=`http://127.0.0.1:${server.address().port}/api`;
+    const call=(url,method='GET',body,who='a',seller=false)=>fetch(base+(seller?'/seller':'/customer')+url,{method,headers:{Origin:(process.env.CLIENT_URL||'http://localhost:3000').split(',')[0],'Content-Type':'application/json',...(who?{Cookie:(seller?'money_hold_seller=':'money_hold_customer=')+who.repeat(64)}:{})},...(body?{body:JSON.stringify(body)}:{})});
+    const payload=(quote,key)=>({requestKey:key,quoteToken:quote.quoteToken,paymentMethod:'cod',delivery:{name:'Test Person',phone:'0771234567',addressLine1:'10 Test Road',city:'Colombo'}});
+    const stock=async()=>(await pool.query('SELECT stock FROM product_variants WHERE id=1'))[0][0].stock;
+    assert.equal((await call('/orders','POST',{},null)).status,401);
+    assert.equal((await call('/orders','GET',null,null,true)).status,401);
+    delete process.env.CHECKOUT_DELIVERY_FEE_LKR;
+    assert.equal((await call('/orders/quote')).status,503);
+    process.env.CHECKOUT_DELIVERY_FEE_LKR='350';
+    assert.equal((await call('/orders/quote')).status,409);
+    await call('/cart/items','POST',{variantId:1,quantity:2});
+    let quote=await (await call('/orders/quote')).json();assert.equal(quote.totalCents,535050);
+    const invalid=payload(quote,'invalid_checkout_01');invalid.delivery.phone='bad';
+    assert.equal((await call('/orders','POST',invalid)).status,422);assert.equal(await stock(),10);
+    // Old quotes never silently accept a new delivery fee or a new price.
+    process.env.CHECKOUT_DELIVERY_FEE_LKR='400';assert.equal((await call('/orders','POST',payload(quote,'fee_changed_key_01'))).status,409);
+    process.env.CHECKOUT_DELIVERY_FEE_LKR='350';
+    await pool.query('UPDATE products SET price=2600 WHERE id=1');assert.equal((await call('/orders','POST',payload(quote,'price_changed_key1'))).status,409);
+    quote=await (await call('/orders/quote')).json();
+    const request=payload(quote,'checkout_request_001');request.totalCents=1;
+    const responses=await Promise.all([call('/orders','POST',request),call('/orders','POST',request)]);
+    assert.deepEqual(responses.map(r=>r.status).sort(),[200,201]);
+    const results=await Promise.all(responses.map(r=>r.json()));assert.equal(results[0].id,results[1].id);const id=results[0].id;
+    assert.equal((await pool.query('SELECT COUNT(*) n FROM order_email_jobs'))[0][0].n,1);
+    assert.equal((await call('/notifications','GET',null,null)).status,401);
+    let inbox=await (await call('/notifications')).json();assert.equal(inbox.unread,1);assert.equal(inbox.items[0].order_id,id);
+    const notificationId=inbox.items[0].id;
+    assert.equal((await (await call('/notifications','GET',null,'b')).json()).unread,0);
+    assert.equal((await call('/notifications/'+notificationId+'/read','PATCH',{},'b')).status,404);
+    assert.equal((await call('/notifications/'+notificationId+'/read','PATCH',{},'a',true)).status,404);
+    assert.equal((await call('/notifications/'+notificationId+'/read','PATCH',{})).status,200);
+    assert.equal((await call('/notifications/'+notificationId+'/read','PATCH',{})).status,200);
+    assert.equal((await (await call('/notifications')).json()).unread,0);
+    assert.equal((await (await call('/notifications','GET',null,'a',true)).json()).unread,1);
+    assert.equal(await stock(),8);assert.equal((await (await call('/cart')).json()).count,0);
+    assert.equal((await call('/orders/'+id,'GET',null,'b')).status,404);
+    assert.equal((await call('/orders/request/checkout_request_001','GET',null,'b')).status,404);
+    let order=(await (await call('/orders/'+id)).json()).order;assert.equal(order.total_cents,555000);assert.equal(order.items[0].unit_price_cents,260000);
+    await pool.query("UPDATE products SET name='Renamed',price=5000 WHERE id=1");
+    order=(await (await call('/orders/'+id)).json()).order;assert.equal(order.items[0].product_name,'Signature Tee');assert.equal(order.total_cents,555000);
+    assert.equal((await call('/orders/'+id+'/status','PATCH',{status:'delivered',expectedStatus:'placed'},'a',true)).status,409);
+    assert.equal((await call('/orders/'+id+'/status','PATCH',{status:'cancelled',expectedStatus:'placed'},'a',true)).status,200);assert.equal(await stock(),10);
+    assert.equal((await call('/orders/'+id+'/status','PATCH',{status:'cancelled',expectedStatus:'placed'},'a',true)).status,409);assert.equal(await stock(),10);
+    // Competing customers cannot buy the last units twice.
+    await pool.query('UPDATE product_variants SET stock=2 WHERE id=1');
+    await call('/cart/items','POST',{variantId:1,quantity:2},'a');await call('/cart/items','POST',{variantId:1,quantity:2},'b');
+    const qa=await (await call('/orders/quote','GET',null,'a')).json(),qb=await (await call('/orders/quote','GET',null,'b')).json();
+    const race=await Promise.all([call('/orders','POST',payload(qa,'race_customer_a_01'),'a'),call('/orders','POST',payload(qb,'race_customer_b_01'),'b')]);
+    assert.deepEqual(race.map(r=>r.status).sort(),[201,409]);assert.equal(await stock(),0);
+    const winner=race[0].status===201?'a':'b',loser=winner==='a'?'b':'a';
+    const raceId=(await race[winner==='a'?0:1].json()).id;
+    assert.equal((await (await call('/cart','GET',null,loser)).json()).count,2);
+    for(const [from,to] of [['placed','processing'],['processing','shipped'],['shipped','delivered']])assert.equal((await call('/orders/'+raceId+'/status','PATCH',{expectedStatus:from,status:to},'a',true)).status,200);
+    assert.equal((await call('/orders/'+raceId+'/status','PATCH',{expectedStatus:'delivered',status:'cancelled'},'a',true)).status,409);
+    // Force a write failure after stock decrement: everything, including stock, rolls back.
+    await pool.query('UPDATE product_variants SET stock=4 WHERE id=1');
+    const rollbackQuote=await (await call('/orders/quote','GET',null,loser)).json();
+    const before=(await pool.query('SELECT COUNT(*) n FROM orders'))[0][0].n;
+    const beforeJobs=(await pool.query('SELECT COUNT(*) n FROM order_email_jobs'))[0][0].n;
+    await pool.query("CREATE TRIGGER reject_order_item BEFORE INSERT ON order_items FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Test rollback'");
+    const Order=require('../models/Order');
+    await assert.rejects(()=>Order.place(loser==='a'?1:2,payload(rollbackQuote,'rollback_request01')));
+    assert.equal(await stock(),4);assert.equal((await pool.query('SELECT COUNT(*) n FROM orders'))[0][0].n,before);
+    assert.equal((await pool.query('SELECT COUNT(*) n FROM order_email_jobs'))[0][0].n,beforeJobs);
+    assert.equal((await (await call('/cart','GET',null,loser)).json()).count,2);
+    await pool.query('DROP TRIGGER reject_order_item');
+    const recovered=await Order.place(loser==='a'?1:2,payload(rollbackQuote,'rollback_request01'));assert.ok(recovered.id);assert.equal(await stock(),2);
+    // Exercise the durable worker using injected mail only: no external email is sent.
+    process.env.MAIL_FALLBACK='false';
+    const {runOne}=require('../workers/orderEmailWorker');
+    const initialJob=(await pool.query('SELECT id FROM order_email_jobs ORDER BY id LIMIT 1'))[0][0].id;
+    await runOne(async()=>{throw Object.assign(new Error('Do not store private SMTP details'),{code:'EAUTH'});});
+    let job=(await pool.execute('SELECT * FROM order_email_jobs WHERE id=?',[initialJob]))[0][0];
+    assert.equal(job.status,'pending');assert.equal(job.attempts,1);assert.equal(job.last_error,'EAUTH');
+    assert.equal((await pool.query('SELECT COUNT(*) n FROM orders'))[0][0].n,before+1);
+    await pool.execute('UPDATE order_email_jobs SET available_at=NOW() WHERE id=?',[initialJob]);
+    const sent=[];const send=async mail=>{sent.push(mail);};
+    await Promise.all([runOne(send),runOne(send)]);
+    while(await runOne(send)){}
+    const totalJobs=(await pool.query('SELECT COUNT(*) n FROM order_email_jobs'))[0][0].n;
+    assert.equal(sent.length,totalJobs);assert.equal(new Set(sent.map(mail=>mail.messageId)).size,totalJobs);
+    assert.ok(sent.every(mail=>mail.to.endsWith('@example.test')&&mail.text.includes('Delivery to:')&&mail.text.includes('Total:')));
+    await pool.execute("UPDATE order_email_jobs SET status='pending',attempts=4,available_at=NOW() WHERE id=?",[initialJob]);
+    await runOne(async()=>{throw new Error('SMTP secret should not be saved');});
+    job=(await pool.execute('SELECT * FROM order_email_jobs WHERE id=?',[initialJob]))[0][0];assert.equal(job.status,'failed');assert.equal(job.attempts,5);assert.equal(job.last_error,'SEND_FAILED');
+    // A crashed worker's expired lease is reclaimed.
+    await pool.execute("UPDATE order_email_jobs SET status='processing',attempts=1,lease_until=DATE_SUB(NOW(),INTERVAL 1 MINUTE) WHERE id=?",[initialJob]);
+    await runOne(send);assert.equal((await pool.execute('SELECT status FROM order_email_jobs WHERE id=?',[initialJob]))[0][0].status,'sent');
+    // Development fallback never pretends an email reached a customer.
+    process.env.MAIL_FALLBACK='true';
+    await pool.execute("UPDATE order_email_jobs SET status='pending',attempts=0,available_at=NOW() WHERE id=?",[initialJob]);
+    const sentBefore=sent.length;await runOne(send);assert.equal(sent.length,sentBefore);
+    assert.equal((await pool.execute('SELECT status FROM order_email_jobs WHERE id=?',[initialJob]))[0][0].status,'simulated');
+  }finally{
+    Session.find=original;Seller.session=originalSeller;
+    if(server){server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+    await pool.end();assert.match(dbName,/^money_hold_orders_test_\d+$/);await admin.query('DROP DATABASE `'+dbName+'`');await admin.end();
+  }
+});

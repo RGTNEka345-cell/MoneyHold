@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const customerSession = require("../utils/customerSession");
 const Customer = require("../models/Customer");
 const OTP = require("../models/OTP");
 const { sendVerificationOTP } = require("../utils/EmailService");
@@ -12,15 +12,6 @@ const {
   matchesOTP,
 } = require("../utils/OTPManager");
 
-function createCustomerToken(customer) {
-  const secret = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "money-hold-development-secret-change-me" : "");
-  if (!secret) throw new Error("JWT_SECRET is not configured.");
-  return jwt.sign(
-    { sub: String(customer.id), role: "customer", email: customer.email },
-    secret,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d", issuer: "money-hold-api" }
-  );
-}
 
 async function issueVerificationOTP(customer) {
   const otp = generateOTP();
@@ -100,12 +91,11 @@ async function verifyCustomerEmail(req, res, next) {
 
     const verifiedCustomer = await Customer.verifyEmail(customer.id);
     await OTP.removeForCustomer(customer.id);
-    const token = createCustomerToken(verifiedCustomer);
+    await customerSession.start(req, res, verifiedCustomer.id);
 
     return res.json({
       success: true,
       message: "Email verified. Welcome to Money Hold.",
-      token,
       customer: {
         id: verifiedCustomer.id,
         firstName: verifiedCustomer.first_name,

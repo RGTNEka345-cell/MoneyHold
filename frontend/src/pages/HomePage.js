@@ -1,16 +1,13 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
+import FeaturedProducts from "../components/HomePage/FeaturedProducts";
 import Navbar from "../components/HomePage/Navbar";
 import Footer from "../components/HomePage/Footer";
 import "./HomePage.css";
 
 const Arrow = () => <span className="arrow">↗</span>;
 
-const products = [
-  { name: "Signature Long Sleeve", type: "Core Collection", price: "LKR 8,900", image: "/assets/money-hold-showcase.png", position: "18% 22%" },
-  { name: "MH Backprint Edition", type: "Limited Drop", price: "LKR 9,500", image: "/assets/money-hold-showcase.png", position: "72% 22%" },
-  { name: "Midnight Essential", type: "Everyday Uniform", price: "LKR 7,900", image: "/assets/money-hold-showcase.png", position: "50% 62%" },
-];
 
 export default function HomePage() {
   return (
@@ -24,7 +21,7 @@ export default function HomePage() {
           <p className="eyebrow">THE SIGNATURE SERIES · 2026</p>
           <h1>Hold your<br/><em>presence.</em></h1>
           <p className="hero-copy">Refined streetwear built around quiet confidence, considered detail and an unmistakable identity.</p>
-          <a className="primary-cta" href="#collection">Explore the collection <Arrow /></a>
+          <Link className="primary-cta" to="/shop">Explore the collection <Arrow /></Link>
         </div>
         <div className="hero-index"><span>01</span><div></div><span>04</span></div>
         <a href="#new" className="scroll-cue">SCROLL TO DISCOVER <span>↓</span></a>
@@ -48,20 +45,9 @@ export default function HomePage() {
       <section id="collection" className="collection section-pad">
         <div className="section-heading">
           <div><p className="eyebrow">CURATED FOR YOU</p><h2>Featured pieces</h2></div>
-          <a href="#all">View all products <Arrow /></a>
+          <Link to="/shop">View all products <Arrow /></Link>
         </div>
-        <div className="product-grid">
-          {products.map((product, index) => (
-            <article className="product-card" key={product.name}>
-              <a href={`#product-${index + 1}`} className="product-image">
-                {index === 1 && <span className="product-badge">LIMITED</span>}
-                <img src={product.image} alt={product.name} style={{ objectPosition: product.position }} />
-                <span className="quick-view">Quick view</span>
-              </a>
-              <div className="product-info"><div><h3>{product.name}</h3><p>{product.type}</p></div><strong>{product.price}</strong></div>
-            </article>
-          ))}
-        </div>
+        <FeaturedProducts />
       </section>
 
       <section id="story" className="story">

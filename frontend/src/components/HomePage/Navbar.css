@@ -41,6 +41,7 @@
 .nav-actions svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .bag-button span { position: absolute; top: -6px; right: -7px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; background: #c7a45a; color: #090909; font-size: 9px; font-weight: 700; }
 .menu-toggle { display: none; }
+.customer-session-dot { position:absolute; right:0; top:0; width:6px; height:6px; border-radius:50%; background:#c7a45a; }
 
 @media (max-width: 760px) {
   .announcement { font-size: 8px; letter-spacing: .1em; }
@@ -53,4 +54,6 @@
   .nav-links.open { transform: translateY(0); opacity: 1; }
   .nav-actions { grid-column: 3; grid-row: 1; }
   .nav-actions button:not(.bag-button), .nav-icon-link { display: none; }
+  .nav-actions .customer-account-link { display:grid; }
+  .nav-actions .bag-button { display:grid; }
 }

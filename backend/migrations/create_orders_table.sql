@@ -1,1 +1,25 @@
 
+CREATE TABLE IF NOT EXISTS orders (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ order_number VARCHAR(40) NOT NULL UNIQUE,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ request_key VARCHAR(64) NOT NULL,
+ request_hash CHAR(64) NOT NULL,
+ recipient_name VARCHAR(120) NOT NULL,
+ phone VARCHAR(30) NOT NULL,
+ address_line1 VARCHAR(200) NOT NULL,
+ address_line2 VARCHAR(200) NOT NULL DEFAULT '',
+ city VARCHAR(100) NOT NULL,
+ postal_code VARCHAR(20) NOT NULL DEFAULT '',
+ country CHAR(2) NOT NULL DEFAULT 'LK',
+ payment_method VARCHAR(10) NOT NULL DEFAULT 'cod',
+ status VARCHAR(20) NOT NULL DEFAULT 'placed',
+ subtotal_cents BIGINT UNSIGNED NOT NULL,
+ delivery_cents BIGINT UNSIGNED NOT NULL,
+ total_cents BIGINT UNSIGNED NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ UNIQUE KEY customer_request (customer_id,request_key),
+ FOREIGN KEY (customer_id) REFERENCES customers(id),
+ INDEX (customer_id,created_at), INDEX (status,created_at)
+) ENGINE=InnoDB;

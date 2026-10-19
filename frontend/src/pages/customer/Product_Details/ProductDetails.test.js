@@ -1,0 +1,21 @@
+import React from 'react';
+import { render,screen,fireEvent } from '@testing-library/react';
+import { MemoryRouter,Routes,Route } from 'react-router-dom';
+import ProductDetails from './ProductDetails';
+import useShop from '../../../hooks/useShop';
+jest.mock('../../../hooks/useShop',()=>({__esModule:true,default:jest.fn(),shopImage:id=>'/image/'+id,formatPrice:n=>'LKR '+n}));
+test('size and colour selection shows correct stock and responds to live sell-out',()=>{
+  const product={id:1,name:'Signature',description:'Cotton',price:100,category_id:1,category_name:'Tees',images:[{id:1}],variants:[{id:1,size:'M',colour:'Black',stock:3},{id:2,size:'L',colour:'Black',stock:0},{id:3,size:'M',colour:'White',stock:8}]};
+  useShop.mockReturnValue({data:{product},loading:false,error:'',retry:jest.fn()});
+  const app=()=> <MemoryRouter initialEntries={['/shop/1']} future={{v7_startTransition:true,v7_relativeSplatPath:true}}><Routes><Route path="/shop/:id" element={<ProductDetails/>}/></Routes></MemoryRouter>;
+  const {rerender}=render(app());
+  expect(screen.getByRole('button',{name:'L — sold out'}).disabled).toBe(true);
+  fireEvent.click(screen.getByRole('button',{name:'M',exact:true}));
+  expect(screen.getByRole('status').textContent).toContain('3 available');
+  fireEvent.click(screen.getByRole('button',{name:'White',exact:true}));
+  fireEvent.click(screen.getByRole('button',{name:'M',exact:true}));
+  expect(screen.getByRole('status').textContent).toContain('8 available');
+  useShop.mockReturnValue({data:{product:{...product,variants:product.variants.map(v=>({...v,stock:0}))}},loading:false,error:''});
+  rerender(app());
+  expect(screen.getByRole('status').textContent).toContain('now out of stock');
+});

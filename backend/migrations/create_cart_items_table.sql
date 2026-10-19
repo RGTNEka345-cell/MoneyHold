@@ -1,1 +1,10 @@
 
+CREATE TABLE IF NOT EXISTS cart_items (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ cart_id BIGINT UNSIGNED NOT NULL,
+ variant_id BIGINT UNSIGNED NOT NULL,
+ quantity INT UNSIGNED NOT NULL,
+ UNIQUE KEY cart_variant (cart_id,variant_id),
+ FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
+ FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

@@ -15,6 +15,8 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.get("/api/health", (req, res) => res.json({ success: true, service: "money-hold-api" }));
 app.use("/api/auth", authRoutes);
 app.use('/api/seller', require('./routes/sellerRoutes'));
+app.use('/api/shop', require('./routes/productRoutes'));
+app.use('/api/customer', require('./routes/customerRoutes'));
 
 app.use(notFoundHandler);
 app.use(errorHandler);

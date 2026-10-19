@@ -10,7 +10,11 @@ const PORT = Number(process.env.PORT) || 5000;
 async function startServer() {
   try {
     await testDatabaseConnection();
-    app.listen(PORT, () => console.log(`Money Hold API running on http://localhost:${PORT}`));
+    const server=app.listen(PORT, () => {
+      console.log(`Money Hold API running on http://localhost:${PORT}`);
+      const stop=require('./workers/orderEmailWorker').start();
+      server.on('close',stop);
+    });
   } catch (error) {
     console.error("Unable to start Money Hold API. Database connection failed:", error.message);
     process.exit(1);

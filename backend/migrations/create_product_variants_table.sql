@@ -1,1 +1,10 @@
 
+CREATE TABLE IF NOT EXISTS product_variants (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ product_id BIGINT UNSIGNED NOT NULL,
+ size VARCHAR(20) NOT NULL,
+ colour VARCHAR(40) NOT NULL,
+ stock INT UNSIGNED NOT NULL DEFAULT 0,
+ UNIQUE KEY unique_product_variant (product_id, size, colour),
+ FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

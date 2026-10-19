@@ -2,6 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Navbar.css";
+import { useCustomer } from '../Customer/CustomerSessionProvider';
+import { useCart } from '../Customer/CartProvider';
+import NotificationBell from '../Shared/NotificationBell';
 
 const Icon = ({ type }) => {
   const paths = {
@@ -13,6 +16,8 @@ const Icon = ({ type }) => {
 };
 
 export default function Navbar() {
+  const {customer}=useCustomer();
+  const {cart}=useCart();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -24,7 +29,7 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="announcement">COMPLIMENTARY ISLANDWIDE DELIVERY ON ORDERS OVER LKR 15,000</div>
+      <div className="announcement">CASH ON DELIVERY · DELIVERY CHARGES SHOWN AT CHECKOUT</div>
       <header className={`nav-shell ${scrolled ? "nav-scrolled" : ""}`}>
         <Link className="wordmark" to="/" aria-label="Money Hold home">
           <span className="wordmark-mark">MH</span>
@@ -36,15 +41,16 @@ export default function Navbar() {
         </button>
 
         <nav className={open ? "nav-links open" : "nav-links"} aria-label="Main navigation">
-          <a href="#new" onClick={() => setOpen(false)}>New arrivals</a>
-          <a href="#collection" onClick={() => setOpen(false)}>Collection</a>
-          <a href="#story" onClick={() => setOpen(false)}>Our story</a>
+          <Link to="/shop?sort=newest" onClick={() => setOpen(false)}>New arrivals</Link>
+          <Link to="/shop" onClick={() => setOpen(false)}>Shop</Link>
+          <a href="/#story" onClick={() => setOpen(false)}>Our story</a>
         </nav>
 
         <div className="nav-actions">
-          <button aria-label="Search"><Icon type="search" /></button>
-          <Link className="nav-icon-link" to="/login" aria-label="Account"><Icon type="user" /></Link>
-          <button className="bag-button" aria-label="Shopping bag"><Icon type="bag" /><span>0</span></button>
+          {customer&&<NotificationBell key={customer.id}/>}
+          <Link className="nav-icon-link" to="/shop" aria-label="Search products"><Icon type="search" /></Link>
+          <Link className="nav-icon-link customer-account-link" to={customer?'/customer/account':'/login'} aria-label={customer?'My account':'Sign in'} title={customer?'Signed in as '+customer.firstName:'Sign in'}><Icon type="user" />{customer&&<span className="customer-session-dot"/>}</Link>
+          <Link className="bag-button nav-icon-link" to="/customer/cart" aria-label={'Shopping bag, '+cart.count+' items'}><Icon type="bag" /><span>{cart.count}</span></Link>
         </div>
       </header>
     </>

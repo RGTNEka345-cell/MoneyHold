@@ -1,0 +1,48 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const bcrypt=require('bcryptjs');
+const Customer=require('../models/Customer');
+const Session=require('../models/CustomerSession');
+const OTP=require('../models/OTP');
+const {pool}=require('../config/database');
+const app=require('../index');
+test('customer authentication, verification session, role isolation and revocation',async()=>{
+ const password='test-password-123';
+ const customer={id:1,first_name:'Test',last_name:'Customer',email:'customer@example.test',phone:'0770000000',password_hash:await bcrypt.hash(password,4),email_verified:1,is_active:1};
+ const sessions=new Map();
+ const oldCustomer={findByEmail:Customer.findByEmail,verifyEmail:Customer.verifyEmail};const oldSession={...Session};const oldOTP={...OTP};
+ Customer.findByEmail=async email=>email===customer.email?customer:null;
+ Customer.verifyEmail=async()=>{customer.email_verified=1;customer.is_active=1;return customer;};
+ Session.create=async(id,hash,expires)=>sessions.set(hash,{expires});
+ Session.find=async hash=>sessions.has(hash)&&sessions.get(hash).expires>new Date()&&customer.email_verified&&customer.is_active?customer:null;
+ Session.revoke=async hash=>sessions.delete(hash);
+ const server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
+ const base=`http://127.0.0.1:${server.address().port}/api`;
+ const call=(url,body,cookie,origin='http://localhost:3000')=>fetch(base+url,{method:body===undefined?'GET':'POST',headers:{Origin:origin,'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});
+ try{
+  assert.equal((await call('/customer/me')).status,401);
+  assert.equal((await call('/customer/me',undefined,'money_hold_seller='+'a'.repeat(64))).status,401);
+  assert.equal((await call('/customer/login',{})).status,422);
+  assert.equal((await call('/customer/login',{email:customer.email,password:'wrong'})).status,401);
+  assert.equal((await call('/customer/login',{email:customer.email,password},null,'https://evil.test')).status,403);
+  customer.email_verified=0;
+  const unverified=await call('/customer/login',{email:customer.email,password});assert.equal(unverified.status,403);assert.equal((await unverified.json()).verificationRequired,true);
+  customer.email_verified=1;customer.is_active=0;
+  assert.equal((await call('/customer/login',{email:customer.email,password})).status,401);customer.is_active=1;
+  const login=await call('/customer/login',{email:customer.email,password,remember:true});assert.equal(login.status,200);
+  const header=login.headers.get('set-cookie');assert.match(header,/HttpOnly/);assert.match(header,/Max-Age=/);
+  const cookie=header.split(';')[0];assert.equal((await login.json()).customer.password_hash,undefined);
+  assert.equal((await call('/customer/me',undefined,cookie)).status,200);
+  assert.equal((await call('/seller/me',undefined,cookie)).status,401);
+  for(const s of sessions.values())s.expires=new Date(0);
+  assert.equal((await call('/customer/me',undefined,cookie)).status,401);
+  assert.equal((await call('/customer/logout',{},cookie)).status,200);assert.equal(sessions.size,0);
+  assert.equal((await call('/customer/me',undefined,cookie)).status,401);
+  customer.email_verified=0;customer.is_active=0;
+  OTP.findForCustomer=async()=>({id:1,otp_hash:await bcrypt.hash('123456',4),expires_at:new Date(Date.now()+300000),attempt_count:0});
+  OTP.removeForCustomer=async()=>{};
+  const verify=await call('/auth/customer/verify-email',{email:customer.email,otp:'123456'});
+  assert.equal(verify.status,200);assert.ok(verify.headers.get('set-cookie'));assert.equal((await verify.json()).token,undefined);
+  const verifiedCookie=verify.headers.get('set-cookie').split(';')[0];assert.equal((await call('/customer/me',undefined,verifiedCookie)).status,200);
+ }finally{Object.assign(Customer,oldCustomer);Object.assign(Session,oldSession);Object.assign(OTP,oldOTP);await new Promise(resolve=>server.close(resolve));await pool.end();}
+});

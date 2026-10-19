@@ -6,7 +6,13 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "setup:seller": "node scripts/setupSeller.js"
+    "setup:seller": "node scripts/setupSeller.js",
+    "migrate:catalog": "node scripts/migrateCatalog.js",
+    "migrate:customer-sessions": "node scripts/migrateCustomerSessions.js",
+    "migrate:cart": "node scripts/migrateCart.js",
+    "migrate:orders": "node scripts/migrateOrders.js",
+    "migrate:notifications": "node scripts/migrateNotifications.js",
+    "retry:order-email": "node scripts/retryOrderEmail.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -16,7 +22,9 @@
     "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.15.3"
-    ,"nodemailer": "^7.0.9"
+    ,"nodemailer": "^7.0.9",
+    "multer": "^2.0.2",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
