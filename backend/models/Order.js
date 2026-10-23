@@ -55,7 +55,8 @@ async function detail(id,customerId){
   const [items]=await pool.execute('SELECT id,product_id,variant_id,product_name,size,colour,quantity,unit_price_cents,line_total_cents FROM order_items WHERE order_id=? ORDER BY id',[id]);
   const [history]=await pool.execute('SELECT status,created_at FROM order_status_history WHERE order_id=? ORDER BY id',[id]);
   const [tracking]=await pool.execute('SELECT courier_name,tracking_number,tracking_url,version,updated_at FROM order_tracking WHERE order_id=?',[id]);
-  return {...rows[0],items,history,tracking:tracking[0]||null};
+  const returns=await require('./ReturnRequest').forOrder(id);
+  return {...rows[0],items,history,tracking:tracking[0]||null,returns};
 }
 async function list(customerId,page=1){
   page=Number(page);if(!Number.isSafeInteger(page)||page<1||page>100000)v.fail('Invalid page.');

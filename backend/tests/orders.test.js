@@ -12,7 +12,7 @@ test('COD checkout: authorization, snapshots, idempotency, stock race, rollback 
   try{
     await pool.query('CREATE TABLE customers (id BIGINT UNSIGNED PRIMARY KEY,email VARCHAR(191)) ENGINE=InnoDB');await pool.query("INSERT INTO customers VALUES (1,'one@example.test'),(2,'two@example.test')");
     await pool.query('CREATE TABLE sellers (id BIGINT UNSIGNED PRIMARY KEY,is_active BOOLEAN DEFAULT TRUE) ENGINE=InnoDB');await pool.query('INSERT INTO sellers (id) VALUES (1)');
-    for(const table of ['categories','products','product_variants','product_images','carts','cart_items','orders','order_items','order_status_history','notifications','order_email_jobs','order_tracking'])await pool.query(fs.readFileSync(path.join(__dirname,`../migrations/create_${table}_table.sql`),'utf8'));
+    for(const table of ['categories','products','product_variants','product_images','carts','cart_items','orders','order_items','order_status_history','notifications','order_email_jobs','order_tracking','return_requests','return_history'])await pool.query(fs.readFileSync(path.join(__dirname,`../migrations/create_${table}_table.sql`),'utf8'));
     await pool.query("INSERT INTO categories (name) VALUES ('Tees')");
     await pool.query("INSERT INTO products (category_id,name,description,price,is_active) VALUES (1,'Signature Tee','Test',2500.25,1)");
     await pool.query("INSERT INTO product_variants (product_id,size,colour,stock) VALUES (1,'M','Black',10)");

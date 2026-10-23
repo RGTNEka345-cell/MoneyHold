@@ -13,6 +13,7 @@
     "migrate:orders": "node scripts/migrateOrders.js",
     "migrate:notifications": "node scripts/migrateNotifications.js",
     "migrate:tracking": "node scripts/migrateTracking.js",
+    "migrate:returns": "node scripts/migrateReturns.js",
     "retry:order-email": "node scripts/retryOrderEmail.js"
   },
   "dependencies": {

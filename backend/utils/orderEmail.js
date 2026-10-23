@@ -1,9 +1,10 @@
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const money=cents=>new Intl.NumberFormat('en-LK',{style:'currency',currency:'LKR'}).format(Number(cents)/100);
 function render(order,status){
-  const title=status==='placed'?'Order confirmation':status==='tracking_updated'?'Courier tracking details updated':`Order update: ${status}`;
+  const title=status.startsWith('return_')?`Return / exchange request ${status.slice(7)}`:status==='placed'?'Order confirmation':status==='tracking_updated'?'Courier tracking details updated':`Order update: ${status}`;
   const lines=order.items.map(item=>`${item.product_name} — ${item.size} / ${item.colour} × ${item.quantity}: ${money(item.line_total_cents)}`);
   const address=[order.recipient_name,order.address_line1,order.address_line2,order.city,order.postal_code,'Sri Lanka'].filter(Boolean).join(', ');
+  if(status.startsWith('return_'))lines.push('Open My Orders to view the request, seller instructions and latest progress. Return closure does not confirm a refund. Refunds and additional shipping charges are handled separately with the store.');
   if(order.tracking){
     lines.push(`Courier: ${order.tracking.courier_name}`,`Tracking number: ${order.tracking.tracking_number}`);
     if(order.tracking.tracking_url)lines.push(`Courier tracking page: ${order.tracking.tracking_url}`);
