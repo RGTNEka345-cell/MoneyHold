@@ -43,7 +43,7 @@ export default function CustomerRegister() {
     <AuthLayout visualTitle={<>Enter the world of <em>Money Hold.</em></>} visualText="Create your account for faster checkout, live order updates and early access to every limited release.">
       <div className="auth-form-wrap register-wrap">
         <span className="auth-kicker">CREATE YOUR ACCOUNT</span><h1>Join the hold.</h1>
-        <p className="auth-lead">Already a member? <Link to="/login">Sign in here</Link></p>
+        <p className="auth-lead">Already a member? <Link className="mh-action" to="/login">Sign in here</Link></p>
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="auth-row">
             <div className="auth-field"><label htmlFor="first-name">First name</label><input id="first-name" name="firstName" placeholder="First name" autoComplete="given-name" /></div>

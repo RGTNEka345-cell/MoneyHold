@@ -1,0 +1,134 @@
+/* Shared action treatment. Navigation remains links; forms remain buttons. */
+:root {
+  --action-ink: #ead29a;
+  --action-surface: #171511;
+  --action-border: #75613a;
+  --action-hover: #2b2418;
+}
+:is(.shop-page, .cart-page, .customer-account) {
+  --action-ink: #614719;
+  --action-surface: #fffcf5;
+  --action-border: #b8a47c;
+  --action-hover: #f0e5cf;
+}
+.seller-theme {
+  --action-ink: var(--seller-gold);
+  --action-surface: var(--seller-card);
+  --action-border: var(--seller-border);
+  --action-hover: var(--seller-account-start);
+}
+a.mh-action,
+:is(.shop-more-link, .overview-heading > a, .overview-empty > a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 11px 18px;
+  margin-block: 6px;
+  border: 1px solid var(--action-border);
+  border-radius: 10px;
+  background: var(--action-surface);
+  color: var(--action-ink);
+  box-shadow: 0 2px 5px #00000008;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+  transition: background-color .18s, border-color .18s, box-shadow .18s;
+}
+a.mh-action:hover,
+:is(.shop-more-link, .overview-heading > a, .overview-empty > a):hover {
+  background: var(--action-hover);
+  border-color: var(--action-ink);
+  box-shadow: 0 4px 12px #00000012;
+  text-decoration: none;
+}
+/* Compact actions inside sentences don't break reading flow. */
+:is(.auth-lead, .auth-options, .auth-switch, .auth-error) a.mh-action {
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+.customer-account-note { display: flex; flex-wrap: wrap; gap: 12px; }
+.engagement > a.mh-action { margin-right: 10px; }
+
+/* Existing primary buttons retain their colours and hierarchy. */
+:is(.primary-cta, .auth-submit, .seller-entry, .cart-primary, .cart-view-bag,
+ .cart-continue-shopping, .seller-order-back, .parcel-track-button,
+ .profile-primary, .engagement-button) {
+  border-radius: 10px;
+  text-decoration: none;
+  transition: box-shadow .18s, filter .18s;
+}
+:is(.primary-cta, .auth-submit, .seller-entry, .cart-primary,
+ .cart-view-bag, .cart-continue-shopping, .seller-order-back,
+ .parcel-track-button, .profile-primary, .engagement-button):hover:not(:disabled) {
+  box-shadow: 0 5px 16px #00000020;
+  filter: brightness(1.06);
+}
+/* Secondary form actions: retries, edit, remove, pagination and confirmations. */
+:is(.profile-form, .saved-address-actions, .address-delete-confirm,
+ .checkout-saved-address, .review-form, .wishlist-grid, .review-pagination,
+ .order-pagination, .cart-warning, .returns-panel, .seller-main) button {
+  border-radius: 8px;
+}
+:is(.profile-form, .saved-address-actions, .address-delete-confirm,
+ .checkout-saved-address, .review-form, .wishlist-grid, .review-pagination,
+ .engagement [role="alert"], .account-profile [role="alert"],
+ .account-addresses [role="alert"]) button:not(.profile-primary):not(.engagement-button) {
+  padding: 10px 14px;
+  min-height: 40px;
+  border: 1px solid var(--action-border);
+  border-radius: 8px;
+  background: var(--action-surface);
+  color: var(--action-ink);
+  font: inherit;
+  font-size: 13px;
+  margin: 4px;
+}
+/* Seller navigation gets a clear active state in both themes. */
+.seller-workspace .seller-sidebar > a:not(.seller-logo) {
+  padding: 13px 15px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--seller-text);
+  transition: background-color .18s, border-color .18s;
+}
+.seller-workspace .seller-sidebar > a:not(.seller-logo):hover,
+.seller-workspace .seller-sidebar > a[aria-current="page"] {
+  background: var(--seller-account-start);
+  border-color: var(--seller-border);
+  color: var(--seller-gold);
+}
+.nav-links a { padding: 11px 9px; border-radius: 7px; }
+.nav-links a:hover { background: #c7a45a14; color: #ecd49b; }
+.nav-links a::after { bottom: 4px; left: 9px; }
+.nav-links a:hover::after { width: calc(100% - 18px); }
+.nav-actions .nav-icon-link { min-width: 36px; min-height: 36px; border-radius: 9px; text-decoration: none; }
+.nav-actions .nav-icon-link:hover { background: #c7a45a24; }
+.footer-links a { padding: 9px 12px; border: 1px solid #29251d; border-radius: 7px; color: #c9c3b6; }
+.footer-links a:hover { border-color: #75613a; background: #19160f; }
+/* Cards and product names stay cards/text, not oversized buttons. */
+:is(.order-list > a, .shop-card-photo) { transition: box-shadow .18s, border-color .18s; }
+.order-list > a:hover { border-color: var(--action-border); box-shadow: 0 4px 16px #00000010; }
+:is(.shop-card-meta h2, .cart-item-copy) > a:hover { text-decoration: underline; text-underline-offset: 4px; }
+a:focus-visible, button:focus-visible {
+  outline: 3px solid #b58b36;
+  outline-offset: 4px;
+}
+button:disabled { cursor: not-allowed; }
+@media (max-width: 600px) {
+  .customer-account-note > a.mh-action { flex: 1 1 180px; }
+  .nav-links a { min-height: 44px; }
+  .footer-links { gap: 20px; }
+  .review-pagination { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  a, button { transition: none !important; }
+}

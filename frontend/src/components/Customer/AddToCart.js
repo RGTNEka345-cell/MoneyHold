@@ -18,7 +18,7 @@ export default function AddToCart({variant}) {
     catch(err){setError(err.message);}finally{setBusy(false);}
   }
   if(loading)return <p role="status">Checking your account…</p>;
-  if(!customer)return <div className="shop-purchase-note"><Link to="/login" state={{from:location.pathname}}>Sign in to add to your bag</Link><p>Select your favourite size and colour after signing in.</p></div>;
+  if(!customer)return <div className="shop-purchase-note"><Link className="mh-action" to="/login" state={{from:location.pathname}}>Sign in to add to your bag</Link><p>Select your favourite size and colour after signing in.</p></div>;
   return <form className="cart-add" onSubmit={submit}>
     <label>Quantity<input aria-label="Quantity" type="number" min="1" max={Math.min(variant?.stock||1,99)} step="1" required value={quantity} disabled={busy||!variant?.stock} onChange={e=>{setQuantity(e.target.value);setAdded(false);}}/></label>
     <button className="cart-primary" disabled={busy||!variant?.stock}>{busy?'Adding…':!variant?'Select a size':'Add to bag'}</button>

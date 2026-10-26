@@ -45,7 +45,7 @@ export default function HomePage() {
       <section id="collection" className="collection section-pad">
         <div className="section-heading">
           <div><p className="eyebrow">CURATED FOR YOU</p><h2>Featured pieces</h2></div>
-          <Link to="/shop">View all products <Arrow /></Link>
+          <Link className="mh-action" to="/shop">View all products <Arrow /></Link>
         </div>
         <FeaturedProducts />
       </section>

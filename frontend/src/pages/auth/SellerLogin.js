@@ -40,7 +40,7 @@ export default function SellerLogin() {
           <button className="auth-submit" type="submit">Enter seller dashboard <span>→</span></button>
           </fieldset>
         </form>
-        <p className="auth-switch">Shopping with us? <Link to="/login">Customer sign in</Link></p>
+        <p className="auth-switch">Shopping with us? <Link className="mh-action" to="/login">Customer sign in</Link></p>
       </div>
     </AuthLayout>
   );

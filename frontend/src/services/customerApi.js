@@ -6,3 +6,4 @@ export async function customerRequest(path,body,method){
   return data;
 }
 export function watchCart(onChange){const stream=new EventSource(base+'/customer/cart/events',{withCredentials:true});stream.onmessage=onChange;return ()=>stream.close();}
+export function watchAccount(onChange){const stream=new EventSource(base+'/customer/profile/events',{withCredentials:true});stream.onmessage=onChange;return ()=>stream.close();}

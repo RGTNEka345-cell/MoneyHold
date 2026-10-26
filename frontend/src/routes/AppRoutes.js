@@ -3,6 +3,8 @@ import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "../pages/HomePage";
 import CustomerLogin from "../pages/auth/CustomerLogin";
+import WishlistPage from '../pages/customer/Wishlist';
+import PasswordRecovery from '../pages/auth/PasswordRecovery';
 import CustomerRegister from "../pages/auth/CustomerRegister";
 import SellerLogin from "../pages/auth/SellerLogin";
 import VerifyEmail from "../pages/auth/VerifyEmail";
@@ -26,6 +28,7 @@ export default function AppRoutes() {
       <Route path="/shop" element={<Shop />} />
       <Route path="/shop/:id" element={<ProductDetails />} />
       <Route element={<CustomerGuard/>}>
+        <Route path="/customer/wishlist" element={<WishlistPage/>}/>
         <Route path="/customer/cart" element={<Cart/>}/>
         <Route path="/customer/checkout" element={<Checkout/>}/>
         <Route path="/customer/orders" element={<Orders/>}/>
@@ -34,6 +37,8 @@ export default function AppRoutes() {
         <Route path="/customer/dashboard" element={<Navigate to="/customer/account" replace/>}/>
       </Route>
       <Route path="/login" element={<CustomerLogin />} />
+      <Route path="/forgot-password" element={<PasswordRecovery key="forgot"/>}/>
+      <Route path="/reset-password" element={<PasswordRecovery key="reset" reset/>}/>
       <Route path="/register" element={<CustomerRegister />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/seller/login" element={<SellerLogin />} />

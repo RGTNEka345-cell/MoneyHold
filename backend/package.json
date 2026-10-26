@@ -14,6 +14,9 @@
     "migrate:notifications": "node scripts/migrateNotifications.js",
     "migrate:tracking": "node scripts/migrateTracking.js",
     "migrate:returns": "node scripts/migrateReturns.js",
+    "migrate:addresses": "node scripts/migrateAddresses.js",
+    "migrate:password-resets": "node scripts/migratePasswordResets.js",
+    "migrate:engagement": "node scripts/migrateEngagement.js",
     "retry:order-email": "node scripts/retryOrderEmail.js"
   },
   "dependencies": {

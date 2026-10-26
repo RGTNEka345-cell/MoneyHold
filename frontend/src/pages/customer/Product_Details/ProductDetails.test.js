@@ -3,6 +3,7 @@ import { render,screen,fireEvent } from '@testing-library/react';
 import { MemoryRouter,Routes,Route } from 'react-router-dom';
 import ProductDetails from './ProductDetails';
 import useShop from '../../../hooks/useShop';
+jest.mock('../../../components/Customer/ProductEngagement',()=>({WishlistButton:()=>null,ProductReviews:()=>null}));
 jest.mock('../../../hooks/useShop',()=>({__esModule:true,default:jest.fn(),shopImage:id=>'/image/'+id,formatPrice:n=>'LKR '+n}));
 test('size and colour selection shows correct stock and responds to live sell-out',()=>{
   const product={id:1,name:'Signature',description:'Cotton',price:100,category_id:1,category_name:'Tees',images:[{id:1}],variants:[{id:1,size:'M',colour:'Black',stock:3},{id:2,size:'L',colour:'Black',stock:0},{id:3,size:'M',colour:'White',stock:8}]};

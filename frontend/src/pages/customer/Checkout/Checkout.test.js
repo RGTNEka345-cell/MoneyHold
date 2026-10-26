@@ -5,6 +5,7 @@ import Checkout from './Checkout';
 import {customerRequest,watchCart} from '../../../services/customerApi';
 jest.mock('../../../components/HomePage/Navbar',()=>()=>null);
 jest.mock('../../../components/HomePage/Footer',()=>()=>null);
+jest.mock('../../../components/Customer/SavedAddressPicker',()=>()=>null);
 jest.mock('../../../components/Customer/CustomerSessionProvider',()=>({useCustomer:()=>({customer:{id:1,firstName:'Test',lastName:'Person',phone:'0771234567'}})}));
 const mockRefresh=jest.fn();
 jest.mock('../../../components/Customer/CartProvider',()=>({useCart:()=>({refresh:mockRefresh})}));

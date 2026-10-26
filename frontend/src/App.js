@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import CustomerSessionProvider from './components/Customer/CustomerSessionProvider';
 import CartProvider from './components/Customer/CartProvider';
+import './components/Shared/Interactions.css';
 
 function App() {
   return (

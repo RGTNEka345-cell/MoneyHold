@@ -67,7 +67,7 @@ export default function VerifyEmail() {
           <button className="auth-submit" type="submit" disabled={submitting}>{submitting ? "Verifying..." : "Verify email"}<span>→</span></button>
         </form>
         <div className="verify-actions"><span>Didn't receive the code?</span><button type="button" onClick={handleResend} disabled={countdown > 0 || resending}>{resending ? "Sending..." : countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}</button></div>
-        <p className="auth-switch"><Link to="/register">← Change registration details</Link></p>
+        <p className="auth-switch"><Link className="mh-action" to="/register">← Change registration details</Link></p>
       </div>
     </AuthLayout>
   );

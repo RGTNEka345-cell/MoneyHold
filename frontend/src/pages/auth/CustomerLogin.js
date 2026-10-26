@@ -36,13 +36,13 @@ export default function CustomerLogin() {
       <div className="auth-form-wrap">
         <span className="auth-kicker">CUSTOMER ACCESS</span>
         <h1>Welcome back.</h1>
-        <p className="auth-lead">New to Money Hold? <Link to="/register">Create an account</Link></p>
+        <p className="auth-lead">New to Money Hold? <Link className="mh-action" to="/register">Create an account</Link></p>
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {busy&&<p role="status">Signing in…</p>}
           <fieldset disabled={busy} style={{display:'contents',border:0}}>
           <div className="auth-field"><label htmlFor="customer-email">Email address</label><input id="customer-email" name="email" type="email" placeholder="you@example.com" autoComplete="email" /></div>
           <div className="auth-field password-field"><label htmlFor="customer-password">Password</label><input id="customer-password" name="password" type={showPassword ? "text" : "password"} placeholder="Enter your password" autoComplete="current-password" /><button className="password-toggle" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}><EyeIcon hidden={!showPassword} /></button></div>
-          <div className="auth-options"><label className="auth-check"><input name="remember" type="checkbox" />Remember me</label></div>
+          <div className="auth-options"><label className="auth-check"><input name="remember" type="checkbox" />Remember me</label><Link className="mh-action" to="/forgot-password">Forgot password?</Link></div>
           {error && <p className="auth-error" role="status">{error}</p>}
           <button className="auth-submit" type="submit">Sign in to your account <span>→</span></button>
           </fieldset>
